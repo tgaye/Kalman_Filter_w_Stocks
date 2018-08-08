@@ -113,6 +113,6 @@ ylabel('Equity')
 % APR and Sharpe calculations
 fprintf(1, 'APR=%f Sharpe=%f\n',...
     prod(1+ret).^(252/length(ret))-1, sqrt(252)*mean(ret)/std(ret));
-% APR=0.262252 Sharpe=2.361162
+% APR=0.227875 Sharpe=2.195395
 
 
