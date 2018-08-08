@@ -2,7 +2,13 @@
 % Daily data on EWA-EWC (correlated pair)
 load('EWA + EWC.mat');
 x = ewa;
+x2 = x(:,1); %Grab just stock price data
 y = ewc;
+
+% We can find correlation of our time-series with matlabs corrcoef()
+corr = corrcoef(x2,y);
+disp(corr);
+% Correlation of .9804!  This should make for a great mean reverting pair to trade.
 
 % Augment x with ones to accomodate possible offset in regression between y vs x.
 x=[x ones(size(x))];
@@ -43,7 +49,6 @@ for t=1:length(y)
     
     beta(:, t)=beta(:, t)+K*e(t); % State update: beta(t|t)=beta(t|t-1) + K(T) * e(t)
     P=R-K*x(t, :)*R; % State covariance update: cov(t|t)=cov(t|t-1) - K(T) * x(t) * cov(t|t-1)
-    
 end
 
 %----------------------------------------------------------------------------
@@ -68,7 +73,7 @@ title('Measurement Prediction Error e(t) and S.D of e(t)');
 xlabel('Time (Days)')
 
 % Combine both EWC and EWA to one matrix
-y2=[x(:, 1) y];
+y2=[x2, y];
 
 % Buy when spread deviates > 1 standard deviation [sqrt(Q)]
 % e = measurement prediction error (actual - predicted)
@@ -98,6 +103,7 @@ numUnits=numUnitsLong+numUnitsShort;
 % [hedgeRatio -ones(size(hedgeRatio))] is the shares allocation, 
 % [hedgeRatio -ones(size(hedgeRatio))].*y2 is the dollar capital allocation, 
 % while positions is the dollar capital in each ETF.
+% Profit / Loss Math:
 positions=repmat(numUnits, [1 size(y2, 2)]).*[-beta(1, :)' ones(size(beta(1, :)'))].*y2; 
 pnl=sum(lag(positions, 1).*(y2-lag(y2, 1))./lag(y2, 1), 2); % daily P&L of the strategy
 ret=pnl./sum(abs(lag(positions, 1)), 2); % return is P&L divided by gross market value of portfolio
@@ -114,5 +120,3 @@ ylabel('Equity')
 fprintf(1, 'APR=%f Sharpe=%f\n',...
     prod(1+ret).^(252/length(ret))-1, sqrt(252)*mean(ret)/std(ret));
 % APR=0.227875 Sharpe=2.195395
-
-
