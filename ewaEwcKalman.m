@@ -1,5 +1,5 @@
 %KALMAN FILTER ON EWA + EWC
-% Daily data on EWA-EWC
+% Daily data on EWA-EWC (correlated pair)
 load('EWA + EWC.mat');
 x = ewa;
 y = ewc;
@@ -7,9 +7,8 @@ y = ewc;
 % Augment x with ones to accomodate possible offset in regression between y vs x.
 x=[x ones(size(x))];
 
-%----------------------------------------------------------------------------
-
-delta=0.0001; % delta=1 gives fastest change in beta, delta=0.000....1 allows no change (like traditional linear regression).
+%Initialize Variables
+delta=0.00001; % delta=1 gives fastest change in beta, delta=0.000....1 allows no change (like traditional linear regression).
 
 yhat=NaN(size(y)); % measurement prediction
 e=NaN(size(y)); % measurement prediction error
@@ -27,6 +26,7 @@ Ve=0.001;
 beta(:, 1)=0;
 
 % Given initial beta and R (and P)
+% Calculations for each timestep in our data:
 for t=1:length(y)
     if (t > 1)
         beta(:, t)=beta(:, t-1); % state prediction: beta(t|t-1) = beta(t-1|t-1)
@@ -45,14 +45,19 @@ for t=1:length(y)
     P=R-K*x(t, :)*R; % State covariance update: cov(t|t)=cov(t|t-1) - K(T) * x(t) * cov(t|t-1)
     
 end
+
 %----------------------------------------------------------------------------
 %Kalman Filter: allows for proper adjusting of hedge ratio
 plot(beta(1, :)');
-title('kalman filter estimate of slope');
+title('Kalman filter estimate of slope');
+xlabel('Time (Days)')
+ylabel('Slope Estimate')
 figure;
 
 plot(beta(2, :)');
-title('kalman filter estimate of intercept');
+title('Kalman filter estimate of intercept');
+xlabel('Time (Days)')
+ylabel('Intercept Estimate')
 figure;
 
 % Plot prediction error and S.D of e(t)
@@ -60,6 +65,7 @@ plot(e(3:end), 'r');
 hold on;
 plot(sqrt(Q(3:end)));
 title('Measurement Prediction Error e(t) and S.D of e(t)');
+xlabel('Time (Days)')
 
 % Combine both EWC and EWA to one matrix
 y2=[x(:, 1) y];
@@ -100,9 +106,13 @@ ret(isnan(ret))=0; % NaN's to 0
 % Plot portfolio value
 figure;
 plot(cumprod(1+ret)-1); % Cumulative compounded return
+title('Portolio Value Over Time')
+xlabel('Time (Days)')
+ylabel('Equity')
 
 % APR and Sharpe calculations
-fprintf(1, 'APR=%f Sharpe=%f\n', prod(1+ret).^(252/length(ret))-1, sqrt(252)*mean(ret)/std(ret));
+fprintf(1, 'APR=%f Sharpe=%f\n',...
+    prod(1+ret).^(252/length(ret))-1, sqrt(252)*mean(ret)/std(ret));
 % APR=0.262252 Sharpe=2.361162
 
 
